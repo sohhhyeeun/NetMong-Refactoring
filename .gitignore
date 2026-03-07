@@ -42,3 +42,10 @@ src/main/generated
 
 ### macOS ###
 .DS_Store
+
+logs/
+*.log
+.env
+.env.*
+
+images/
