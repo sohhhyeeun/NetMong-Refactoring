@@ -58,3 +58,7 @@ logging:
     org.hibernate.orm.jdbc.bind: trace
 
 domain: '${custom.image.domain}'
+
+app:
+  s3:
+    enabled: false
