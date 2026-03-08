@@ -25,13 +25,13 @@ public class PostHashtag extends BaseEntity {
     @JoinColumn(name = "hashtag_id")
     private Hashtag hashtag;
 
-    @Column(name = "hashtag_name")
-    private String name;
+//    @Column(name = "hashtag_name")
+//    private String name;
 
     public PostHashtag(Post post, Hashtag hashtag) {
         this.post = post;
         this.hashtag = hashtag;
-        this.name = hashtag.getName();
+//        this.name = hashtag.getName();
     }
 
     public void setPost(Post post) {

@@ -21,7 +21,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
   
     Long countByMemberIdAndDeleteDateIsNull(@Param("memberId") Long memberId);
 
-    @Query("SELECT p FROM Post p JOIN p.names ph WHERE ph.name = :hashtag")
+//    @Query("SELECT p FROM Post p JOIN p.names ph WHERE ph.name = :hashtag")
+//    Page<Post> findByHashtagName(@Param("hashtag") String hashtag, Pageable pageable);
+    @Query("SELECT p FROM Post p JOIN p.names ph JOIN ph.hashtag h WHERE h.name = :hashtag")
     Page<Post> findByHashtagName(@Param("hashtag") String hashtag, Pageable pageable);
 
     @Query("select p from Post p join fetch p.image")

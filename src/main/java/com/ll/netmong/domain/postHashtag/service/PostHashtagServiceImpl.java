@@ -59,7 +59,8 @@ public class PostHashtagServiceImpl implements PostHashtagService {
         //사라진 해시태그(originName)를 삭제
         for (String originName : originNames) {
             if (!names.contains(originName)) {
-                PostHashtag postHashtag = postHashtagRepository.findByPostAndName(originPost, originName);
+//                PostHashtag postHashtag = postHashtagRepository.findByPostAndName(originPost, originName);
+                PostHashtag postHashtag = postHashtagRepository.findByPostAndHashtag_Name(originPost, originName);
                 postHashtagRepository.delete(postHashtag);
             }
         }
