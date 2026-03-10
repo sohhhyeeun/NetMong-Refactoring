@@ -25,7 +25,7 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @SuperBuilder(toBuilder = true)
-@SQLDelete(sql = "UPDATE post SET status = 'N' where id = ?")
+@SQLDelete(sql = "UPDATE post SET status = 'N', deleted_at = NOW() where id = ?")
 @Where(clause = "status = 'Y'")
 public class Post extends BaseEntity {
     @Column(length=100)
@@ -35,7 +35,8 @@ public class Post extends BaseEntity {
     private String content;
 
     @Column(name = "deleted_at")
-    private String deleteDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss"));
+//    private String deleteDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss"));
+    private LocalDateTime deleteDate;
     @Builder.Default
     @Column(nullable = false)
     private String status = "Y";

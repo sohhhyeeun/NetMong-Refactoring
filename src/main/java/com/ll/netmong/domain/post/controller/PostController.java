@@ -89,7 +89,6 @@ public class PostController {
         String foundUsername = foundMember.getUsername();
 
         postService.deletePost(postId, foundUsername);
-        postHashtagService.deleteHashtag(postId);
 
         return RsData.of("S-1", "해당 게시물이 삭제되었습니다.");
     }

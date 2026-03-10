@@ -11,6 +11,7 @@ import com.ll.netmong.domain.post.dto.response.PostResponse;
 import com.ll.netmong.domain.post.entity.Post;
 import com.ll.netmong.domain.post.repository.PostRepository;
 import com.ll.netmong.domain.postComment.exception.DataNotFoundException;
+import com.ll.netmong.domain.postHashtag.service.PostHashtagService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -36,6 +37,7 @@ public class PostServiceImpl implements PostService {
     private final LikedPostRepository likedPostRepository;
     private final MemberRepository memberRepository;
     private final ImageService imageService;
+    private final PostHashtagService postHashtagService;
 
     @Override
     public Page<PostResponse> searchPostsByHashtag (String hashtag, Pageable pageable) {
@@ -110,11 +112,12 @@ public class PostServiceImpl implements PostService {
         Post originPost = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("포스트를 찾을 수 없습니다."));
 
-        if (originPost.getMember().getUsername().equals(foundUsername)) {
-            postRepository.deleteById(postId);
-        } else {
+        if (!originPost.getMember().getUsername().equals(foundUsername)) {
             throw new PermissionDeniedException("해당 포스트에 대한 삭제 권한이 없습니다.");
         }
+
+        postHashtagService.deleteHashtag(postId);
+        postRepository.deleteById(postId);
     }
 
     private Post updatePost(Long id, UpdatePostRequest updatePostRequest) {
