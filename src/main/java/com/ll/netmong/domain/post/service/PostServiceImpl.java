@@ -22,9 +22,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -91,8 +93,13 @@ public class PostServiceImpl implements PostService {
                 .orElseThrow(() -> new DataNotFoundException("사용자를 찾을 수 없습니다."));
         boolean isLiked = likedPostRepository.existsByMemberAndPost(member, originPost);
 
+        List<String> hashtags = originPost.getNames().stream()
+                .map(postHashtag -> postHashtag.getHashtag().getName())
+                .collect(Collectors.toList());
+
         PostResponse postResponse = new PostResponse(originPost);
         postResponse.setIsLiked(isLiked);
+        postResponse.setHashtags(hashtags);
 
         return postResponse;
     }
