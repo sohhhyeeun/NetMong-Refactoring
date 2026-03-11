@@ -11,9 +11,11 @@ import com.ll.netmong.domain.post.dto.response.PostResponse;
 import com.ll.netmong.domain.post.entity.Post;
 import com.ll.netmong.domain.post.repository.PostRepository;
 import com.ll.netmong.domain.postComment.exception.DataNotFoundException;
+import com.ll.netmong.domain.postHashtag.service.PostHashtagService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -22,9 +24,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +39,7 @@ public class PostServiceImpl implements PostService {
     private final LikedPostRepository likedPostRepository;
     private final MemberRepository memberRepository;
     private final ImageService imageService;
+    private final PostHashtagService postHashtagService;
 
     @Override
     public Page<PostResponse> searchPostsByHashtag (String hashtag, Pageable pageable) {
@@ -55,9 +61,26 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public Page<PostResponse> viewPostsByPage(Pageable pageable) {
-        Page<Post> postsPage = postRepository.findAllWithImage(pageable);
+        Page<Long> postIdsPage = postRepository.findPostIdsByPage(pageable);
 
-        return postsPage.map(PostResponse::postsView);
+        if (postIdsPage.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        List<Long> postIds = postIdsPage.getContent();
+
+        List<Post> posts = postRepository.findAllWithImageAndHashtagsByIdIn(postIds);
+
+        Map<Long, Post> postMap = posts.stream()
+                .collect(Collectors.toMap(Post::getId, Function.identity()));
+
+        List<PostResponse> content = postIds.stream()
+                .map(postMap::get)
+                .filter(Objects::nonNull)
+                .map(PostResponse::postsView)
+                .toList();
+
+        return new PageImpl<>(content, pageable, postIdsPage.getTotalElements());
     }
 
     private Post uploadPost(PostRequest postRequest, Member foundMember) {
@@ -91,8 +114,13 @@ public class PostServiceImpl implements PostService {
                 .orElseThrow(() -> new DataNotFoundException("사용자를 찾을 수 없습니다."));
         boolean isLiked = likedPostRepository.existsByMemberAndPost(member, originPost);
 
+        List<String> hashtags = originPost.getNames().stream()
+                .map(postHashtag -> postHashtag.getHashtag().getName())
+                .collect(Collectors.toList());
+
         PostResponse postResponse = new PostResponse(originPost);
         postResponse.setIsLiked(isLiked);
+        postResponse.setHashtags(hashtags);
 
         return postResponse;
     }
@@ -103,11 +131,12 @@ public class PostServiceImpl implements PostService {
         Post originPost = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("포스트를 찾을 수 없습니다."));
 
-        if (originPost.getMember().getUsername().equals(foundUsername)) {
-            postRepository.deleteById(postId);
-        } else {
+        if (!originPost.getMember().getUsername().equals(foundUsername)) {
             throw new PermissionDeniedException("해당 포스트에 대한 삭제 권한이 없습니다.");
         }
+
+        postHashtagService.deleteHashtag(postId);
+        postRepository.deleteById(postId);
     }
 
     private Post updatePost(Long id, UpdatePostRequest updatePostRequest) {
@@ -147,5 +176,4 @@ public class PostServiceImpl implements PostService {
         return postRepository.findById(postId)
                 .orElseThrow(() -> new DataNotFoundException("해당하는 게시물을 찾을 수 없습니다."));
     }
-
 }

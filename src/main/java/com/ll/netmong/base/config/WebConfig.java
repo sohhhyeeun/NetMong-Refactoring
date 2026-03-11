@@ -17,8 +17,11 @@ import java.util.logging.Logger;
 public class WebConfig implements WebMvcConfigurer {
     private static final Logger logger = Logger.getLogger(WebConfig.class.getName());
 
-    @Value("${spring.servlet.multipart.location}")
+//    @Value("${spring.servlet.multipart.location}")
+//    private String imagePath;
+    @Value("${custom.image.url}")
     private String imagePath;
+
     @Value("${domain}")
     String  domain;
 

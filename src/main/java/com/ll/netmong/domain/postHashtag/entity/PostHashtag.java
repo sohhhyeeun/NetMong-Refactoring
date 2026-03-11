@@ -3,7 +3,6 @@ package com.ll.netmong.domain.postHashtag.entity;
 import com.ll.netmong.common.BaseEntity;
 import com.ll.netmong.domain.hashtag.entity.Hashtag;
 import com.ll.netmong.domain.post.entity.Post;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -25,13 +24,9 @@ public class PostHashtag extends BaseEntity {
     @JoinColumn(name = "hashtag_id")
     private Hashtag hashtag;
 
-    @Column(name = "hashtag_name")
-    private String name;
-
     public PostHashtag(Post post, Hashtag hashtag) {
         this.post = post;
         this.hashtag = hashtag;
-        this.name = hashtag.getName();
     }
 
     public void setPost(Post post) {

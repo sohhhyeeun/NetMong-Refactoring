@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Optional;
 
 @Getter
@@ -19,6 +20,7 @@ public class PostResponse {
     String createDate;
     private Long likesCount;
     private Boolean isLiked;
+    private List<String> hashtags;
 
     public PostResponse(Post post) {
         this.postId = post.getId();
@@ -33,6 +35,14 @@ public class PostResponse {
     }
 
     public static PostResponse postsView (Post post) {
-        return new PostResponse(post);
+        PostResponse postResponse = new PostResponse(post);
+
+        postResponse.setHashtags(
+                post.getNames().stream()
+                        .map(postHashtag -> postHashtag.getHashtag().getName())
+                        .toList()
+        );
+
+        return postResponse;
     }
 }
