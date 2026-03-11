@@ -17,7 +17,6 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,7 +34,6 @@ public class Post extends BaseEntity {
     private String content;
 
     @Column(name = "deleted_at")
-//    private String deleteDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss"));
     private LocalDateTime deleteDate;
     @Builder.Default
     @Column(nullable = false)

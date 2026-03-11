@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
-
     Optional<Post> findById(Long id);
 
     Page<Post> findByMemberIdAndDeleteDateIsNullOrderByCreateDateDesc(@Param("memberId") Long memberId, Pageable pageable);
@@ -22,13 +21,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
   
     Long countByMemberIdAndDeleteDateIsNull(@Param("memberId") Long memberId);
 
-//    @Query("SELECT p FROM Post p JOIN p.names ph WHERE ph.name = :hashtag")
-//    Page<Post> findByHashtagName(@Param("hashtag") String hashtag, Pageable pageable);
     @Query("SELECT p FROM Post p JOIN p.names ph JOIN ph.hashtag h WHERE h.name = :hashtag")
     Page<Post> findByHashtagName(@Param("hashtag") String hashtag, Pageable pageable);
-
-//    @Query("SELECT p FROM Post p JOIN FETCH p.image")
-//    Page<Post> findAllWithImage(Pageable pageable);
 
     @Query(
             value = """

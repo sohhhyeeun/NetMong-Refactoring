@@ -61,9 +61,6 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public Page<PostResponse> viewPostsByPage(Pageable pageable) {
-//        Page<Post> postsPage = postRepository.findAllWithImage(pageable);
-
-//        return postsPage.map(PostResponse::postsView);
         Page<Long> postIdsPage = postRepository.findPostIdsByPage(pageable);
 
         if (postIdsPage.isEmpty()) {
@@ -179,5 +176,4 @@ public class PostServiceImpl implements PostService {
         return postRepository.findById(postId)
                 .orElseThrow(() -> new DataNotFoundException("해당하는 게시물을 찾을 수 없습니다."));
     }
-
 }
