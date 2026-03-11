@@ -15,6 +15,7 @@ import com.ll.netmong.domain.postHashtag.service.PostHashtagService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -59,9 +61,29 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public Page<PostResponse> viewPostsByPage(Pageable pageable) {
-        Page<Post> postsPage = postRepository.findAllWithImage(pageable);
+//        Page<Post> postsPage = postRepository.findAllWithImage(pageable);
 
-        return postsPage.map(PostResponse::postsView);
+//        return postsPage.map(PostResponse::postsView);
+        Page<Long> postIdsPage = postRepository.findPostIdsByPage(pageable);
+
+        if (postIdsPage.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        List<Long> postIds = postIdsPage.getContent();
+
+        List<Post> posts = postRepository.findAllWithImageAndHashtagsByIdIn(postIds);
+
+        Map<Long, Post> postMap = posts.stream()
+                .collect(Collectors.toMap(Post::getId, Function.identity()));
+
+        List<PostResponse> content = postIds.stream()
+                .map(postMap::get)
+                .filter(Objects::nonNull)
+                .map(PostResponse::postsView)
+                .toList();
+
+        return new PageImpl<>(content, pageable, postIdsPage.getTotalElements());
     }
 
     private Post uploadPost(PostRequest postRequest, Member foundMember) {
