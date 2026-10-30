@@ -70,6 +70,7 @@ public class Post extends BaseEntity {
         this.likesCount--;  // 좋아요 수 감소
     }
 
+    @Builder.Default
     @OneToMany(mappedBy = "post")
     private List<PostHashtag> names = new ArrayList<>();
 
