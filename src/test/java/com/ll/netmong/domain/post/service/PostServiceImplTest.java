@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -79,7 +80,7 @@ class PostServiceImplTest {
         //given
 
         //when
-        Post post = postService.uploadPostWithImage(postRequest, image, member);
+        Post post = postService.uploadPostWithImage(postRequest, image, member, List.of());
 
         //then
         Assertions.assertThat(post.getTitle()).isEqualTo("테스트1");
@@ -90,7 +91,7 @@ class PostServiceImplTest {
     @DisplayName("id, userDetails를 받아 post 상세 값을 보여준다.")
     public void testGetDetail() throws IOException {
         //given
-        Post post = postService.uploadPostWithImage(postRequest, image, member);
+        Post post = postService.uploadPostWithImage(postRequest, image, member, List.of());
 
         // when
         PostResponse postDetail = postService.getDetail(post.getId(), userDetails);
@@ -131,7 +132,7 @@ class PostServiceImplTest {
         updatePostRequest.setFoundUsername("username150");
 
         //when
-        postService.updatePostWithImage(post.getId(), updatePostRequest, image);
+        postService.updatePostWithImage(post.getId(), updatePostRequest, image, List.of());
 
         //then
         Post updatedPost = postRepository.findById(post.getId())

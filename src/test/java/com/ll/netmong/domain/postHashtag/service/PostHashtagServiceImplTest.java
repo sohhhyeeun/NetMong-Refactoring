@@ -1,15 +1,29 @@
 package com.ll.netmong.domain.postHashtag.service;
 
+import com.ll.netmong.domain.hashtag.entity.Hashtag;
+import com.ll.netmong.domain.hashtag.repository.HashtagRepository;
+import com.ll.netmong.domain.hashtag.service.HashtagService;
 import com.ll.netmong.domain.member.entity.Member;
 import com.ll.netmong.domain.member.repository.MemberRepository;
 import com.ll.netmong.domain.member.service.MemberService;
 import com.ll.netmong.domain.post.entity.Post;
 import com.ll.netmong.domain.post.repository.PostRepository;
 import com.ll.netmong.domain.post.service.PostService;
+import com.ll.netmong.domain.postHashtag.entity.PostHashtag;
+import com.ll.netmong.domain.postHashtag.repository.PostHashtagRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @SpringBootTest
 @Transactional
@@ -29,6 +43,14 @@ class PostHashtagServiceImplTest {
     private MemberRepository memberRepository;
     @Autowired
     private PostRepository postRepository;
+    @Autowired
+    private HashtagService hashtagService;
+    @Autowired
+    private HashtagRepository hashtagRepository;
+    @Autowired
+    private PostHashtagRepository postHashtagRepository;
+    @Autowired
+    EntityManager em;
 
 //    @BeforeEach
 //    void setUp() {
@@ -95,4 +117,76 @@ class PostHashtagServiceImplTest {
 //        Assertions.assertThat(originNames.get(0)).isEqualTo("오늘");
 //        Assertions.assertThat(originNames.get(1)).isEqualTo("멍멍");
 //    }
+
+    @Test
+    @DisplayName("post와 hashtags를 받아 같은 해시태그는 1개만 연결한다.")
+    void testLinkHashtagsWithDuplicateTag() {
+        //given
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Post savedPost = savePost("#멍멍" + suffix + " #산책" + suffix + " #멍멍" + suffix);
+        List<Hashtag> hashtags = saveHashtags(savedPost.getContent());
+
+        //when
+        postHashtagService.linkHashtags(savedPost, hashtags);
+        em.flush();
+        em.clear();
+
+        //then
+        List<String> names = postHashtagRepository.findByPostId(savedPost.getId()).stream()
+                .map(postHashtag -> postHashtag.getHashtag().getName())
+                .toList();
+        Assertions.assertThat(names).containsExactlyInAnyOrder("멍멍" + suffix, "산책" + suffix);
+    }
+
+    @Test
+    @DisplayName("post와 hashtags를 받아 중복 연결이 있는 게시물의 해시태그를 수정(추가, 삭제)한다.")
+    void testUpdateHashtagsWithDuplicateRows() {
+        //given
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Post savedPost = savePost("#멍멍" + suffix + " #산책" + suffix);
+        List<Hashtag> originHashtags = saveHashtags(savedPost.getContent());
+        postHashtagRepository.save(new PostHashtag(savedPost, originHashtags.get(0)));
+        postHashtagRepository.save(new PostHashtag(savedPost, originHashtags.get(0)));
+        postHashtagRepository.save(new PostHashtag(savedPost, originHashtags.get(1)));
+        em.flush();
+        em.clear();
+
+        Post foundPost = postRepository.findById(savedPost.getId())
+                .orElseThrow(() -> new EntityNotFoundException("포스트를 찾을 수 없습니다."));
+        Hashtag keptHashtag = hashtagRepository.findByName("멍멍" + suffix).orElseThrow();
+        Hashtag newHashtag = hashtagRepository.save(new Hashtag("오늘" + suffix));
+
+        //when
+        postHashtagService.updateHashtags(foundPost, List.of(keptHashtag, newHashtag));
+        em.flush();
+        em.clear();
+
+        //then
+        List<String> names = postHashtagRepository.findByPostId(savedPost.getId()).stream()
+                .map(postHashtag -> postHashtag.getHashtag().getName())
+                .toList();
+        Assertions.assertThat(names).containsExactlyInAnyOrder("멍멍" + suffix, "오늘" + suffix);
+    }
+
+    private Post savePost(String content) {
+        String memberSuffix = UUID.randomUUID().toString().substring(0, 8);
+        Member savedMember = memberRepository.save(Member.builder().username("username" + memberSuffix).email("user" + memberSuffix + "@naver.com").build());
+
+        return postRepository.save(Post.builder()
+                .title("테스트")
+                .member(savedMember)
+                .writer(savedMember.getUsername())
+                .content(content)
+                .build());
+    }
+
+    private List<Hashtag> saveHashtags(String content) {
+        List<Hashtag> hashtags = new ArrayList<>();
+
+        for (String name : hashtagService.extractHashtagNames(content)) {
+            hashtags.add(hashtagRepository.save(new Hashtag(name)));
+        }
+
+        return hashtags;
+    }
 }

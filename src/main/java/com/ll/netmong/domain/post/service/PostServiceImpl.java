@@ -1,6 +1,7 @@
 package com.ll.netmong.domain.post.service;
 
 import com.ll.netmong.common.PermissionDeniedException;
+import com.ll.netmong.domain.hashtag.entity.Hashtag;
 import com.ll.netmong.domain.image.service.ImageService;
 import com.ll.netmong.domain.likedPost.repository.LikedPostRepository;
 import com.ll.netmong.domain.member.entity.Member;
@@ -94,13 +95,14 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
-    public Post uploadPostWithImage(PostRequest postRequest, MultipartFile image, Member foundMember) throws IOException {
+    public Post uploadPostWithImage(PostRequest postRequest, MultipartFile image, Member foundMember, List<Hashtag> hashtags) throws IOException {
         if (Objects.isNull(image) || image.isEmpty()) {
             throw new IllegalArgumentException("이미지 파일이 없습니다.");
         }
 
         Post post = uploadPost(postRequest, foundMember);
         post.addPostImage(imageService.uploadImage(post, image).orElseThrow());
+        postHashtagService.linkHashtags(post, hashtags);
 
         return post;
     }
@@ -155,13 +157,14 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
-    public void updatePostWithImage(Long id, UpdatePostRequest updatePostRequest, MultipartFile image) throws IOException {
+    public void updatePostWithImage(Long id, UpdatePostRequest updatePostRequest, MultipartFile image, List<Hashtag> hashtags) throws IOException {
         if (Objects.isNull(image) || image.isEmpty()) {
             throw new IllegalArgumentException("이미지 파일이 없습니다.");
         }
 
         Post post = updatePost(id, updatePostRequest);
         post.addPostImage(imageService.uploadImage(post, image).orElseThrow());
+        postHashtagService.updateHashtags(post, hashtags);
     }
 
     @Override
